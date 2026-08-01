@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/logo.png" alt="Houdini Logo" width="180"/>
+  <img src="image-2.jpg" alt="Houdini Logo" width="180"/>
 </p>
 
 <h1 align="center">🎩 Houdini</h1>
