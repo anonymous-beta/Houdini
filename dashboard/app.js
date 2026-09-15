@@ -1,18 +1,36 @@
-const socket = io();
 const ADMIN_KEY = prompt('Admin Key:') || '';
 let killState = false;
 
-// Auth check — FIXED: styled error pages
+function showFatal(msg) {
+    document.body.innerHTML = `<h1 style="color:white;text-align:center;margin-top:100px;font-family:sans-serif;">${msg}</h1>`;
+}
+
+// Socket auth — the server rejects unauthenticated sockets, so the admin key
+// is enforced server-side now (previously the key check was cosmetic and
+// stats were broadcast to any visitor).
+const socket = io({ auth: { adminKey: ADMIN_KEY } });
+
+socket.on('connect_error', (err) => {
+    showFatal(err && err.message === 'unauthorized' ? 'Unauthorized' : 'Server Offline');
+});
+
+// HTTP auth check for immediate feedback
 fetch('/api/admin/stats', {headers: {'X-Admin-Key': ADMIN_KEY}})
-    .then(r => { if (!r.ok) document.body.innerHTML = '<h1 style="color:white;text-align:center;margin-top:100px;font-family:sans-serif;">Unauthorized</h1>'; })
-    .catch(() => document.body.innerHTML = '<h1 style="color:white;text-align:center;margin-top:100px;font-family:sans-serif;">Server Offline</h1>');
+    .then(r => { if (!r.ok) showFatal('Unauthorized'); })
+    .catch(() => {});
+
+function esc(s) {
+    return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
 
 function updateStats(data) {
     document.getElementById('stat-total').textContent = data.total;
     document.getElementById('stat-executed').textContent = data.executed;
     document.getElementById('stat-conversion').textContent = data.total > 0 ? ((data.executed/data.total)*100).toFixed(1) + '%' : '0%';
     document.getElementById('stat-bots').textContent = data.bots;
-    
+
     // Funnel bar
     const max = Math.max(data.funnel.viewed, 1);
     const p = (n) => (n/max)*100;
@@ -24,29 +42,30 @@ function updateStats(data) {
     document.getElementById('funnel-copied').textContent = data.funnel.copied;
     document.getElementById('funnel-executed').style.width = p(data.funnel.executed) + '%';
     document.getElementById('funnel-executed').textContent = data.funnel.executed;
-    
-    // Table — FIXED: added CSS class wrappers
+
+    // Table — all dynamic values HTML-escaped (stored-XSS fix)
     const tbody = document.getElementById('tokens-body');
     tbody.innerHTML = '';
     data.recent.forEach(t => {
-        const stages = JSON.parse(t.stages || '[]');
-        // FIXED: stage tags now wrapped in span.stage-tag
-        const stageTags = stages.map(s => `<span class="stage-tag">${s.stage}</span>`).join('');
-        // FIXED: status badges now wrapped in span.badge with proper classes
-        const status = t.executed ? '<span class="badge badge-executed">EXECUTED</span>' : 
-                      t.bot_flag ? '<span class="badge badge-bot">BOT</span>' : 
+        let stages = [];
+        try { stages = JSON.parse(t.stages || '[]'); } catch (e) {}
+        const stageTags = stages
+            .map(s => `<span class="stage-tag">${esc(s.stage)}</span>`)
+            .join('');
+        const status = t.executed ? '<span class="badge badge-executed">EXECUTED</span>' :
+                      t.bot_flag ? '<span class="badge badge-bot">BOT</span>' :
                       '<span class="badge badge-pending">PENDING</span>';
-        
-        tbody.innerHTML += `
-            <tr>
-                <td>${t.id.slice(0,16)}...</td>
-                <td>${t.ip}</td>
-                <td>${t.os_detected || 'unknown'}</td>
-                <td>${status}</td>
-                <td><div class="stage-list">${stageTags}</div></td>
-                <td>${new Date(t.created_at).toLocaleTimeString()}</td>
-            </tr>
+
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${esc(t.id.slice(0,16))}...</td>
+            <td>${esc(t.ip)}</td>
+            <td>${esc(t.os_detected || 'unknown')}</td>
+            <td>${status}</td>
+            <td><div class="stage-list">${stageTags}</div></td>
+            <td>${esc(new Date(t.created_at).toLocaleTimeString())}</td>
         `;
+        tbody.appendChild(row);
     });
 }
 
